@@ -1,0 +1,3213 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jawa Chat</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+            min-height: 100vh;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chat-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            width: 100%;
+            max-width: 1200px;
+            height: calc(100vh - 20px);
+            max-height: 800px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .chat-title {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .user-info {
+            font-size: 14px;
+            opacity: 0.9;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .online-indicator {
+            width: 8px;
+            height: 8px;
+            background: #4ade80;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .header-right {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .connection-status {
+            background: rgba(255,255,255,0.2);
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .connection-status.disconnected {
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        .logout-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 12px;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-1px);
+        }
+
+        .chat-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: #f8f9fa;
+            border-right: 1px solid #e9ecef;
+            padding: 20px;
+            flex-shrink: 0;
+            overflow-y: auto;
+        }
+
+        .sidebar h3 {
+            margin-bottom: 15px;
+            color: #495057;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .online-users {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .online-users .user-item {
+            padding: 12px 15px;
+            margin-bottom: 4px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            border: 1px solid transparent;
+        }
+
+        .online-users .user-item:hover {
+            background: #f5f6fa;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            border-color: rgba(37, 211, 102, 0.3);
+        }
+
+        .online-users .user-item:active {
+            transform: scale(0.98);
+        }
+
+        .online-users .user-item.current-user {
+            background: linear-gradient(135deg, rgba(37, 211, 102, 0.1) 0%, rgba(18, 140, 126, 0.1) 100%);
+            border: 1px solid rgba(37, 211, 102, 0.3);
+            cursor: default;
+        }
+
+        .online-users .user-item.current-user:hover {
+            transform: none;
+            background: linear-gradient(135deg, rgba(37, 211, 102, 0.1) 0%, rgba(18, 140, 126, 0.1) 100%);
+        }
+
+        .user-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .username {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .user-badge {
+            font-size: 11px;
+            color: #667eea;
+            font-weight: 500;
+        }
+
+        .user-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: #6c757d;
+        }
+
+        .online-indicator {
+            width: 6px;
+            height: 6px;
+            background: #4ade80;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .recent-offline-indicator {
+            width: 6px;
+            height: 6px;
+            background: #fbbf24;
+            border-radius: 50%;
+        }
+
+        .offline-indicator {
+            width: 6px;
+            height: 6px;
+            background: #6b7280;
+            border-radius: 50%;
+        }
+
+        .user-item.user-typing .online-indicator {
+            background: #f59e0b;
+            animation: blink 1s infinite;
+        }
+
+        .user-item.user-typing .status-text {
+            color: #f59e0b;
+            font-style: italic;
+        }
+
+        /* Real-time animations */
+        .user-item.user-connecting {
+            animation: userConnecting 1s ease-out;
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(34, 197, 94, 0.05) 100%);
+        }
+
+        .user-item.user-disconnecting {
+            animation: userDisconnecting 0.5s ease-out forwards;
+        }
+
+        @keyframes userConnecting {
+            0% {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes userDisconnecting {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .main-chat {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .messages-container {
+            flex: 1;
+            padding: 0;
+            overflow-y: auto;
+            background: #efeae2;
+            scroll-behavior: smooth;
+        }
+
+        .welcome-message {
+            text-align: center;
+            padding: 30px 20px;
+            color: #54656f;
+            font-style: italic;
+            background: rgba(37, 211, 102, 0.1);
+            border-radius: 15px;
+            margin: 20px;
+            border: 1px solid rgba(37, 211, 102, 0.2);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            animation: fadeInUp 0.4s ease-out;
+        }
+
+        .message.own {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .message:not(.own) {
+            display: flex;
+            justify-content: flex-start;
+        }
+
+        .message-wrapper {
+            max-width: 70%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message.own .message-wrapper {
+            align-items: flex-end;
+        }
+
+        .message:not(.own) .message-wrapper {
+            align-items: flex-start;
+        }
+
+        .message-header {
+            font-size: 11px;
+            color: #6c757d;
+            margin-bottom: 5px;
+            padding: 0 5px;
+            font-weight: 600;
+        }
+
+        .message-bubble {
+            padding: 14px 18px;
+            border-radius: 20px;
+            word-wrap: break-word;
+            position: relative;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            line-height: 1.4;
+        }
+
+        .message.own .message-bubble {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom-right-radius: 8px;
+        }
+
+        .message:not(.own) .message-bubble {
+            background: white;
+            color: #333;
+            border-bottom-left-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+
+        .message-content {
+            margin-bottom: 8px;
+        }
+
+        .message-time {
+            font-size: 10px;
+            opacity: 0.7;
+            text-align: right;
+        }
+
+        .message:not(.own) .message-time {
+            text-align: left;
+        }
+
+        .typing-indicator {
+            font-style: italic;
+            color: #6c757d;
+            padding: 15px 20px;
+            display: none;
+            background: rgba(108, 117, 125, 0.1);
+            border-radius: 10px;
+            margin: 10px 20px;
+        }
+
+        .input-container {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e9ecef;
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+            flex-shrink: 0;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            position: relative;
+        }
+
+        .message-input {
+            width: 100%;
+            padding: 16px 20px;
+            border: none;
+            border-radius: 25px;
+            outline: none;
+            font-size: 14px;
+            transition: all 0.3s;
+            resize: none;
+            min-height: 50px;
+            max-height: 120px;
+            font-family: inherit;
+            background: white;
+        }
+
+        .message-input:focus {
+            border: none;
+            outline: none;
+            box-shadow: none;
+        }
+
+        .send-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .send-btn:active {
+            transform: scale(0.95);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        @keyframes fadeInUp {
+            from { 
+                opacity: 0; 
+                transform: translateY(20px); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0); 
+            }
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6c757d;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 12px 18px;
+            border-radius: 10px;
+            margin: 10px 20px;
+            border: 1px solid #f5c6cb;
+            border-left: 4px solid #dc3545;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            body {
+                padding: 5px;
+            }
+
+            .chat-container {
+                height: calc(100vh - 10px);
+                border-radius: 15px;
+                max-width: none;
+            }
+
+            .chat-header {
+                padding: 12px 15px;
+            }
+
+            .chat-title {
+                font-size: 20px;
+            }
+
+            .sidebar {
+                display: none;
+            }
+
+            .messages-container {
+                padding: 15px;
+            }
+
+            .message-wrapper {
+                max-width: 85%;
+            }
+
+            .input-container {
+                padding: 15px;
+                gap: 10px;
+            }
+
+            .message-input {
+                padding: 14px 18px;
+                font-size: 16px; /* Prevent zoom on iOS */
+            }
+
+            .send-btn {
+                width: 45px;
+                height: 45px;
+            }
+
+            .connection-status {
+                display: none;
+            }
+
+            .user-info {
+                font-size: 12px;
+            }
+
+            .header-right {
+                gap: 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .chat-header {
+                padding: 10px 12px;
+            }
+
+            .chat-title {
+                font-size: 18px;
+            }
+
+            .header-left {
+                gap: 10px;
+            }
+
+            .user-info span:first-child {
+                display: none;
+            }
+
+            .message-wrapper {
+                max-width: 90%;
+            }
+
+            .message-bubble {
+                padding: 12px 15px;
+            }
+
+            .input-container {
+                padding: 12px;
+            }
+
+            .logout-btn {
+                padding: 6px 10px;
+                font-size: 11px;
+            }
+        }
+
+        /* Tablet Landscape */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .sidebar {
+                width: 240px;
+            }
+
+            .message-wrapper {
+                max-width: 75%;
+            }
+        }
+
+        /* Large Desktop */
+        @media (min-width: 1400px) {
+            .chat-container {
+                max-width: 1400px;
+            }
+
+            .sidebar {
+                width: 320px;
+            }
+        }
+
+        /* Notification System */
+        #notification-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 350px;
+        }
+
+        .notification {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+            margin-bottom: 10px;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            animation: slideInNotification 0.3s ease-out;
+            border-left: 4px solid;
+        }
+
+        .notification.success {
+            border-left-color: #22c55e;
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.05) 0%, rgba(34, 197, 94, 0.02) 100%);
+        }
+
+        .notification.info {
+            border-left-color: #3b82f6;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(59, 130, 246, 0.02) 100%);
+        }
+
+        .notification.warning {
+            border-left-color: #f59e0b;
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.05) 0%, rgba(245, 158, 11, 0.02) 100%);
+        }
+
+        .notification.error {
+            border-left-color: #ef4444;
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.05) 0%, rgba(239, 68, 68, 0.02) 100%);
+        }
+
+        .notification-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .notification-icon {
+            font-size: 16px;
+        }
+
+        .notification-text {
+            font-size: 14px;
+            color: #374151;
+            line-height: 1.4;
+        }
+
+        .notification-close {
+            background: none;
+            border: none;
+            font-size: 18px;
+            color: #9ca3af;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .notification-close:hover {
+            background: rgba(0,0,0,0.05);
+            color: #374151;
+        }
+
+        @keyframes slideInNotification {
+            0% {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            100% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Mobile notification adjustments */
+        @media (max-width: 768px) {
+            #notification-container {
+                top: 10px;
+                right: 10px;
+                left: 10px;
+                max-width: none;
+            }
+
+            .notification {
+                padding: 12px;
+            }
+
+            .notification-text {
+                font-size: 13px;
+            }
+        }
+
+        /* Chat Mode Switcher - WhatsApp Style */
+        .chat-mode-switcher {
+            display: flex;
+            margin-bottom: 15px;
+            background: rgba(255,255,255,0.95);
+            border-radius: 25px;
+            padding: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            background: transparent;
+            color: #54656f;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 13px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .mode-btn:hover {
+            background: rgba(37, 211, 102, 0.1);
+            color: #25d366;
+        }
+
+        .mode-btn.active {
+            background: #25d366;
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(37, 211, 102, 0.3);
+        }
+
+        /* Sidebar Content - WhatsApp Style */
+        .sidebar-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: #f0f2f5;
+            border-radius: 12px;
+            padding: 15px;
+        }
+
+        .sidebar-content.hidden {
+            display: none;
+        }
+
+        .sidebar-tip {
+            background: rgba(37, 211, 102, 0.1);
+            border: 1px solid rgba(37, 211, 102, 0.2);
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .sidebar-tip small {
+            color: #25d366;
+            font-weight: 500;
+        }
+
+        .sidebar-tip i {
+            margin-right: 5px;
+        }
+
+        /* Private Chat Info Section */
+        .private-chat-info-section {
+            margin-top: 20px;
+        }
+
+        .info-card {
+            background: rgba(37, 211, 102, 0.1);
+            border: 1px solid rgba(37, 211, 102, 0.2);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .info-card i {
+            color: #25d366;
+            font-size: 20px;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .info-card p {
+            color: #54656f;
+            font-size: 13px;
+            line-height: 1.4;
+            margin: 0;
+        }
+
+        .info-card strong {
+            color: #25d366;
+        }
+
+        /* Typing Indicator for Private Chat - WhatsApp Style */
+        .private-typing-indicator {
+            padding: 10px 20px;
+            display: none;
+            align-items: flex-start;
+            animation: fadeInUp 0.3s ease-out;
+        }
+
+        .private-typing-indicator.show {
+            display: flex;
+        }
+
+        .typing-message-bubble {
+            background: #ffffff;
+            border-radius: 7.5px;
+            padding: 8px 12px;
+            box-shadow: 0 1px 0.5px rgba(0,0,0,0.13);
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            max-width: 75px;
+        }
+
+        .typing-message-bubble::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: -7px;
+            border: 7px solid transparent;
+            border-right: 7px solid #ffffff;
+            border-bottom: 7px solid #ffffff;
+            border-left: 0;
+            border-top: 0;
+        }
+
+        .typing-user-avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #8696a0, #54656f);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 10px;
+            flex-shrink: 0;
+            margin-right: 8px;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 3px;
+            align-items: center;
+        }
+
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            background: #8696a0;
+            border-radius: 50%;
+            animation: typingPulse 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typingPulse {
+            0%, 60%, 100% {
+                transform: scale(0.7);
+                opacity: 0.4;
+            }
+            30% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* Scroll to Bottom Button - WhatsApp Style */
+        .scroll-to-bottom-btn {
+            position: absolute;
+            bottom: 80px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: #25d366;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4);
+            transition: all 0.3s ease;
+            z-index: 100;
+            animation: fadeInUp 0.3s ease-out;
+        }
+
+        .scroll-to-bottom-btn:hover {
+            background: #128c7e;
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(37, 211, 102, 0.6);
+        }
+
+        .scroll-to-bottom-btn:active {
+            transform: scale(0.95);
+        }
+
+        .scroll-to-bottom-btn.show {
+            display: flex;
+        }
+
+        .scroll-btn-content {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .scroll-btn-content i {
+            color: white;
+            font-size: 18px;
+        }
+
+        .new-message-indicator {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ff4444;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+            border: 2px solid white;
+            animation: pulse 2s infinite;
+        }
+
+        .new-message-indicator.show {
+            display: flex;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Private Chat Sidebar */
+        .private-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .private-header h3 {
+            margin: 0;
+            color: #495057;
+            font-size: 16px;
+        }
+
+        .new-chat-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 50%;
+            background: #667eea;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .new-chat-btn:hover {
+            background: #5a6fd8;
+            transform: scale(1.05);
+        }
+
+        .search-box {
+            position: relative;
+            margin-bottom: 15px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 35px 10px 15px;
+            border: 1px solid #e9ecef;
+            border-radius: 20px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .search-box input:focus {
+            border-color: #667eea;
+        }
+
+        .search-box i {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+        }
+
+        /* Conversations List */
+        .conversations-list {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+
+        .conversation-item {
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            background: white;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            position: relative;
+        }
+
+        .conversation-item:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .conversation-item.active {
+            border-color: #667eea;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        }
+
+        .conversation-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .conversation-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .conversation-time {
+            font-size: 11px;
+            color: #6c757d;
+        }
+
+        .conversation-preview {
+            color: #6c757d;
+            font-size: 12px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 180px;
+        }
+
+        .unread-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: #e74c3c;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .online-indicator-small {
+            width: 8px;
+            height: 8px;
+            background: #28a745;
+            border-radius: 50%;
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            border: 2px solid white;
+        }
+
+        /* Available Users Section */
+        .available-users-section {
+            border-top: 1px solid #e9ecef;
+            padding-top: 15px;
+        }
+
+        .available-users-section h4 {
+            color: #495057;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .available-users {
+            list-style: none;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .available-user-item {
+            padding: 8px 12px;
+            margin-bottom: 4px;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+        }
+
+        .available-user-item:hover {
+            background: #f8f9fa;
+            transform: translateY(-1px);
+        }
+
+        .user-avatar-small {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #28a745, #20c997);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 10px;
+        }
+
+        /* Chat Main Header - WhatsApp Style */
+        .chat-main-header {
+            background: #f0f2f5;
+            padding: 15px 20px;
+            border-bottom: 1px solid #e9ecef;
+            flex-shrink: 0;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .chat-header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .chat-header-content.hidden {
+            display: none;
+        }
+
+        .chat-header-content h2 {
+            margin: 0;
+            color: #333;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .chat-description {
+            color: #6c757d;
+            font-size: 12px;
+        }
+
+        .private-chat-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .chat-user-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .chat-user-details h2 {
+            margin: 0 0 2px 0;
+            color: #333;
+            font-size: 16px;
+        }
+
+        .chat-user-status {
+            color: #28a745;
+            font-size: 12px;
+        }
+
+        .chat-header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .header-action-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 50%;
+            background: #f8f9fa;
+            color: #6c757d;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .header-action-btn:hover {
+            background: #e9ecef;
+            color: #495057;
+        }
+
+        /* Messages Content - WhatsApp Style */
+        .messages-content {
+            width: 100%;
+            height: 100%;
+            background: #efeae2;
+            background-image: 
+                radial-gradient(circle at 50% 50%, rgba(255,255,255,0.1) 1px, transparent 1px),
+                radial-gradient(circle at 25% 75%, rgba(255,255,255,0.05) 1px, transparent 1px);
+            background-size: 20px 20px, 15px 15px;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .messages-content.hidden {
+            display: none;
+        }
+
+        /* WhatsApp Style Message Bubbles for Global Chat */
+        #group-messages .message {
+            margin-bottom: 12px;
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            max-width: 80%;
+        }
+
+        #group-messages .message.own-message {
+            flex-direction: row-reverse;
+            margin-left: auto;
+            margin-right: 0;
+        }
+
+        .message-wrapper {
+            display: flex;
+            flex-direction: column;
+            max-width: 100%;
+        }
+
+        .message-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #25d366, #128c7e);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+            flex-shrink: 0;
+            margin-bottom: 2px;
+        }
+
+        #group-messages .message.own-message .message-avatar {
+            background: linear-gradient(135deg, #34b7f1, #0084ff);
+        }
+
+        #group-messages .message-content {
+            background: white;
+            border-radius: 12px;
+            padding: 8px 12px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            position: relative;
+            max-width: 100%;
+            word-wrap: break-word;
+        }
+
+        #group-messages .message.own-message .message-content {
+            background: #dcf8c6;
+        }
+
+        #group-messages .message-content::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: -8px;
+            width: 0;
+            height: 0;
+            border: 8px solid transparent;
+            border-right-color: white;
+            border-bottom-color: white;
+            border-left: none;
+            border-top: none;
+        }
+
+        #group-messages .message.own-message .message-content::before {
+            left: auto;
+            right: -8px;
+            border-right: none;
+            border-left-color: #dcf8c6;
+            border-bottom-color: #dcf8c6;
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .message-sender {
+            font-weight: 600;
+            font-size: 13px;
+            color: #25d366;
+        }
+
+        #group-messages .message.own-message .message-sender {
+            color: #0084ff;
+        }
+
+
+
+        .message-body {
+            display: flex;
+            align-items: baseline;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .message-text {
+            font-size: 14px;
+            line-height: 1.4;
+            color: #111b21;
+            flex: 1;
+            min-width: 0;
+        }
+
+        #group-messages .message-text {
+            margin-bottom: 0;
+        }
+
+        .message-time {
+            font-size: 11px;
+            color: #667781;
+            opacity: 0.8;
+            white-space: nowrap;
+            margin-left: auto;
+            flex-shrink: 0;
+        }
+
+        .edited-label {
+            font-size: 10px;
+            color: #667781;
+            font-style: italic;
+            margin-left: 5px;
+        }
+
+        /* Private Chat Message Bubbles - WhatsApp Style */
+        #private-messages .message {
+            margin-bottom: 8px;
+            display: block;
+            max-width: 75%;
+            clear: both;
+        }
+
+        #private-messages .message.own {
+            float: right;
+            text-align: right;
+        }
+
+        #private-messages .message:not(.own) {
+            float: left;
+            text-align: left;
+        }
+
+        .message-bubble {
+            background: #ffffff;
+            border-radius: 7.5px;
+            padding: 6px 12px 8px 12px;
+            box-shadow: 0 1px 0.5px rgba(0,0,0,0.13);
+            position: relative;
+            max-width: 100%;
+            word-wrap: break-word;
+            word-break: break-word;
+            display: inline-block;
+            text-align: left;
+        }
+
+        #private-messages .message.own .message-bubble {
+            background: #dcf8c6;
+            border-radius: 7.5px;
+        }
+
+        /* WhatsApp-style tail for bubbles */
+        .message-bubble::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            width: 0;
+            height: 0;
+        }
+
+        #private-messages .message:not(.own) .message-bubble::before {
+            left: -7px;
+            border: 7px solid transparent;
+            border-right: 7px solid #ffffff;
+            border-bottom: 7px solid #ffffff;
+            border-left: 0;
+            border-top: 0;
+        }
+
+        #private-messages .message.own .message-bubble::before {
+            right: -7px;
+            border: 7px solid transparent;
+            border-left: 7px solid #dcf8c6;
+            border-bottom: 7px solid #dcf8c6;
+            border-right: 0;
+            border-top: 0;
+        }
+
+        #private-messages .message-text {
+            font-size: 14px;
+            line-height: 1.4;
+            color: #111b21;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Private chat message body styling */
+        #private-messages .message-body {
+            display: flex;
+            align-items: baseline;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        #private-messages .message-text {
+            flex: 1;
+            min-width: 0;
+            margin: 0;
+            padding: 0;
+        }
+
+        #private-messages .message-time {
+            font-size: 11px;
+            color: #667781;
+            opacity: 0.8;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .message-status {
+            display: inline-flex;
+            align-items: center;
+            margin-left: 4px;
+            flex-shrink: 0;
+        }
+
+        .message-status i {
+            font-size: 12px;
+            transition: color 0.3s ease;
+        }
+
+        /* Status pesan: terkirim tapi belum dibaca */
+        .message-status i.fa-check-double.sent {
+            color: #8696a0;
+        }
+
+        /* Status pesan: sudah dibaca */
+        .message-status i.fa-check-double.read {
+            color: #53bdeb;
+        }
+
+        /* Single check untuk sent */
+        .message-status i.fa-check {
+            color: #8696a0;
+        }
+
+        /* Date separator styling */
+        .date-separator {
+            text-align: center;
+            margin: 16px 0;
+            position: relative;
+        }
+
+        .date-separator::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #e9ecef;
+        }
+
+        .date-separator span {
+            background: #efeae2;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            color: #8696a0;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Responsive design for mobile */
+        @media (max-width: 768px) {
+            #private-messages .message {
+                max-width: 85%;
+            }
+            
+            .message-bubble {
+                padding: 5px 10px 7px 10px;
+            }
+            
+            .message-text {
+                font-size: 13px;
+            }
+            
+            .message-time {
+                font-size: 10px;
+            }
+
+            .message-body {
+                gap: 4px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #private-messages .message {
+                max-width: 90%;
+            }
+            
+            .message-bubble {
+                padding: 4px 9px 6px 9px;
+            }
+
+            .message-body {
+                gap: 3px;
+            }
+        }
+
+        /* Input Container Wrapper - WhatsApp Style */
+        .input-container-wrapper {
+            flex-shrink: 0;
+            background: #f0f2f5;
+            padding: 15px 20px;
+        }
+
+        .input-container {
+            display: flex;
+            align-items: flex-end;
+            gap: 12px;
+            background: white;
+            border-radius: 25px;
+            padding: 12px 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .input-container.hidden {
+            display: none;
+        }
+
+        .input-wrapper {
+            flex: 1;
+        }
+
+        .message-input {
+            border: none;
+            outline: none;
+            resize: none;
+            width: 100%;
+            font-size: 14px;
+            line-height: 1.4;
+            color: #111b21;
+            background: transparent;
+            min-height: 20px;
+            max-height: 100px;
+            overflow-y: auto;
+            padding: 12px 0;
+        }
+
+        .message-input::placeholder {
+            color: #8696a0;
+        }
+
+        /* ContentEditable input styling */
+        .message-input-container {
+            flex: 1;
+            position: relative;
+        }
+
+        .message-input[contenteditable="true"] {
+            min-height: 20px;
+            max-height: 100px;
+            overflow-y: auto;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+            padding: 12px 0;
+        }
+
+        .message-input[contenteditable="true"]:empty::before {
+            content: attr(data-placeholder);
+            color: #8696a0;
+            pointer-events: none;
+        }
+
+        .message-input[contenteditable="true"]:focus::before {
+            display: none;
+        }
+
+        .message-input[contenteditable="false"] {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .message-input[contenteditable="false"]::before {
+            content: attr(data-placeholder);
+            color: #8696a0;
+            pointer-events: none;
+        }
+
+        .send-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background: #25d366;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .send-btn:hover {
+            background: #128c7e;
+            transform: scale(1.05);
+        }
+
+        .send-btn:disabled {
+            background: #8696a0;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 15px;
+            padding: 0;
+            width: 400px;
+            max-width: 90%;
+            max-height: 80vh;
+            overflow: hidden;
+            animation: slideIn 0.3s ease;
+        }
+
+        .modal-header {
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            color: #333;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .modal-close-btn {
+            background: none;
+            border: none;
+            font-size: 18px;
+            color: #6c757d;
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close-btn:hover {
+            background: #e9ecef;
+            color: #495057;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-users-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+
+        .modal-user-item {
+            padding: 12px;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .modal-user-item:hover {
+            background: #f8f9fa;
+            border-color: #667eea;
+        }
+
+        .modal-user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #28a745, #20c997);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .modal-user-info {
+            flex: 1;
+        }
+
+        .modal-user-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 2px;
+        }
+
+        .modal-user-status {
+            font-size: 12px;
+            color: #28a745;
+        }
+
+        .modal-user-status.offline {
+            color: #6c757d;
+        }
+
+        /* Loading Spinner */
+        .loading-spinner {
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { transform: translate(-50%, -60%); opacity: 0; }
+            to { transform: translate(-50%, -50%); opacity: 1; }
+        }
+
+        /* Notification Styles */
+        #notification-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            max-width: 350px;
+        }
+
+        .notification {
+            background: #ffffff;
+            border: 1px solid #e1e5e9;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            margin-bottom: 10px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            animation: slideInRight 0.3s ease-out;
+            min-width: 300px;
+        }
+
+        .notification.success {
+            border-left: 4px solid #10b981;
+            background: #f0fdf4;
+        }
+
+        .notification.info {
+            border-left: 4px solid #3b82f6;
+            background: #eff6ff;
+        }
+
+        .notification.warning {
+            border-left: 4px solid #f59e0b;
+            background: #fffbeb;
+        }
+
+        .notification.error {
+            border-left: 4px solid #ef4444;
+            background: #fef2f2;
+        }
+
+        .notification-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+        }
+
+        .notification-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .notification-text {
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+            line-height: 1.4;
+        }
+
+        .notification-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #9ca3af;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .notification-close:hover {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="header-left">
+                <div class="online-indicator"></div>
+                <div class="chat-title" id="app-title">💬 Jawa Chat</div>
+            </div>
+            
+            <div class="header-right">
+                <div class="user-info">
+                    <span>Selamat datang,</span>
+                    <strong id="current-user"></strong>
+                </div>
+                <div class="connection-status" id="connection-status">Online</div>
+
+                                        <button class="logout-btn" id="logout-btn">Keluar</button>
+            </div>
+        </div>
+
+        <div class="chat-content">
+            <div class="sidebar" id="sidebar">
+                <!-- Chat Mode Switcher -->
+                <div class="chat-mode-switcher">
+                    <button class="mode-btn active" id="group-mode-btn" onclick="switchToGroupChat()">
+                        <i class="fas fa-globe"></i> Global Chat
+                    </button>
+                    <button class="mode-btn" id="private-mode-btn" onclick="switchToPrivateChat()">
+                        <i class="fas fa-comment"></i> Private Chat
+                    </button>
+                </div>
+
+                <!-- Global Chat Sidebar -->
+                <div class="sidebar-content" id="group-sidebar">
+                    <h3>🌍 Online Users (<span id="online-count">0</span>)</h3>
+                    <div class="sidebar-tip">
+                        <small><i class="fas fa-info-circle"></i> Klik user untuk chat pribadi</small>
+                    </div>
+                    <ul class="online-users" id="online-users">
+                        <!-- Online users will be populated here -->
+                    </ul>
+                </div>
+
+                <!-- Private Chat Sidebar -->
+                <div class="sidebar-content hidden" id="private-sidebar">
+                    <div class="private-header">
+                        <h3>💬 Private Chats</h3>
+                        <button class="new-chat-btn" id="new-private-chat-btn" onclick="showNewPrivateChatModal()">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Search Box -->
+                    <div class="search-box">
+                        <input type="text" id="search-conversations" placeholder="Cari conversations...">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    
+                    <!-- Conversations List -->
+                    <div class="conversations-list" id="conversations-list">
+                        <div class="loading-spinner">
+                            <i class="fas fa-spinner fa-spin"></i> Memuat...
+                        </div>
+                    </div>
+
+                    <!-- Info untuk user -->
+                    <div class="private-chat-info-section">
+                        <div class="info-card">
+                            <i class="fas fa-info-circle"></i>
+                            <p>Gunakan <strong>Global Chat</strong> untuk melihat semua user dan memulai chat pribadi</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="main-chat">
+                <!-- Chat Header -->
+                <div class="chat-main-header" id="chat-main-header">
+                    <!-- Global Chat Header -->
+                    <div class="chat-header-content" id="group-chat-header">
+                        <h2><i class="fas fa-globe"></i> Global Chat</h2>
+                        <span class="chat-description">Chat dengan semua orang di room ini</span>
+                    </div>
+                    
+                    <!-- Private Chat Header -->
+                    <div class="chat-header-content hidden" id="private-chat-header">
+                        <div class="private-chat-info">
+                            <div class="chat-user-avatar" id="private-chat-avatar">U</div>
+                            <div class="chat-user-details">
+                                <h2 id="private-chat-username">Pilih conversation</h2>
+                                <span class="chat-user-status" id="private-chat-status">Klik user untuk mulai chat</span>
+                            </div>
+                        </div>
+                        <div class="chat-header-actions">
+                            <button class="header-action-btn" onclick="showNewPrivateChatModal()" title="Chat Baru">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Messages Container -->
+                <div class="messages-container" id="messages-container">
+                    <!-- Global Chat Messages -->
+                    <div class="messages-content" id="group-messages">
+                        <div class="welcome-message" id="welcome-message">
+                            Selamat datang di Global Chat! 🌍<br>
+                            Chat dengan semua orang di room ini. Semua pesan tersimpan dalam database.
+                        </div>
+                    </div>
+                    
+                    <!-- Private Chat Messages -->
+                    <div class="messages-content hidden" id="private-messages">
+                        <div class="welcome-message" id="private-welcome-message">
+                            <i class="fas fa-comments" style="font-size: 48px; color: #bdc3c7; margin-bottom: 20px;"></i><br>
+                            Pilih conversation untuk mulai private chat<br>
+                            <small>Pilih user dari sidebar atau mulai conversation baru</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Typing Indicator for Global Chat -->
+                <div class="typing-indicator" id="typing-indicator">
+                    <span id="typing-user"></span> sedang mengetik...
+                </div>
+
+                <!-- Typing Indicator for Private Chat -->
+                <div class="private-typing-indicator" id="private-typing-indicator">
+                    <div class="typing-user-avatar" id="private-typing-avatar">U</div>
+                    <div class="typing-message-bubble">
+                        <div class="typing-dots">
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Scroll to Bottom Button -->
+                <div class="scroll-to-bottom-btn" id="scroll-to-bottom-btn">
+                    <div class="scroll-btn-content">
+                        <i class="fas fa-chevron-down"></i>
+                        <span class="new-message-indicator" id="new-message-count">1</span>
+                    </div>
+                </div>
+
+                <!-- Input Container -->
+                <div class="input-container-wrapper">
+                    <!-- Global Chat Input -->
+                    <form class="input-container" id="group-message-form">
+                        <div class="input-wrapper">
+                            <input type="text" id="group-message-input" class="message-input" 
+                                   placeholder="Ketik pesan untuk global chat..." maxlength="1000" required>
+                        </div>
+                        <button type="submit" class="send-btn">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </form>
+                    
+                    <!-- Private Chat Input -->
+                    <form class="input-container hidden" id="private-message-form">
+                        <div class="input-wrapper">
+                            <div class="message-input-container">
+                                <div id="private-message-input" class="message-input" 
+                                     contenteditable="false"
+                                     data-placeholder="Pilih conversation untuk mulai chat..." 
+                                     style="outline: none; max-height: 100px; overflow-y: auto;"></div>
+                            </div>
+                        </div>
+                        <button type="submit" class="send-btn" disabled>
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Private Chat Modal -->
+    <div class="modal" id="new-private-chat-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-plus-circle"></i> Mulai Private Chat Baru</h3>
+                <button class="modal-close-btn" onclick="hideNewPrivateChatModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="search-box">
+                    <input type="text" id="modal-search-users" placeholder="Cari users...">
+                    <i class="fas fa-search"></i>
+                </div>
+                <div class="modal-users-list" id="modal-users-list">
+                    <div class="loading-spinner">
+                        <i class="fas fa-spinner fa-spin"></i> Memuat users...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notification-container"></div>
+
+    <script src="/js/jquery-3.7.1.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        $(document).ready(function() {
+            const socket = io();
+            
+            // DOM Elements
+            const $messagesContainer = $('#messages-container');
+            const $groupMessageForm = $('#group-message-form');
+            const $privateMessageForm = $('#private-message-form');
+            const $groupMessageInput = $('#group-message-input');
+            const $privateMessageInput = $('#private-message-input');
+            const $connectionStatus = $('#connection-status');
+            const $typingIndicator = $('#typing-indicator');
+            const $privateTypingIndicator = $('#private-typing-indicator');
+            const $scrollToBottomBtn = $('#scroll-to-bottom-btn');
+            const $newMessageCount = $('#new-message-count');
+            const $currentUser = $('#current-user');
+            const $onlineUsers = $('#online-users');
+            const $onlineCount = $('#online-count');
+            
+            // State Management
+            let currentUser = null;
+            let isTyping = false;
+            let isPrivateTyping = false;
+            let typingTimer;
+            let privateTypingTimer;
+            let statusUpdateInterval = null;
+            let currentChatMode = 'group';
+            let currentConversation = null;
+            let conversations = [];
+            let allUsers = [];
+            let isAtBottom = true;
+            let newMessageCount = 0;
+            let scrollCheckTimer;
+
+            // Initialize
+            init();
+
+            async function init() {
+                try {
+                    await loadAppInfo();
+                    
+                    const response = await $.get('/api/user');
+                    currentUser = response.user;
+                    $currentUser.text(currentUser.username);
+
+                    await loadGroupMessages();
+                    await loadOnlineUsers();
+                    await loadConversations();
+
+                    socket.emit('user-join', currentUser);
+                    setupSocketEvents();
+                    setupEventHandlers();
+                    startStatusUpdateInterval();
+                    $groupMessageInput.focus();
+
+                } catch (error) {
+                    console.error('Init error:', error);
+                    if (error.status === 401) {
+                        window.location.href = '/login';
+                    }
+                }
+            }
+
+            // ==================== CHAT MODE MANAGEMENT ====================
+            
+            window.switchToGroupChat = function() {
+                // Stop typing indicators di mode sebelumnya
+                stopPrivateTyping();
+                
+                currentChatMode = 'group';
+                $('#group-mode-btn').addClass('active');
+                $('#private-mode-btn').removeClass('active');
+                $('#group-sidebar').removeClass('hidden');
+                $('#private-sidebar').addClass('hidden');
+                $('#group-chat-header').removeClass('hidden');
+                $('#private-chat-header').addClass('hidden');
+                $('#group-messages').removeClass('hidden');
+                $('#private-messages').addClass('hidden');
+                $('#group-message-form').removeClass('hidden');
+                $('#private-message-form').addClass('hidden');
+                $groupMessageInput.focus();
+                
+                // Reset scroll state and check position
+                isAtBottom = true;
+                hideScrollToBottomBtn();
+                setTimeout(() => checkScrollPosition('group'), 100);
+                
+                console.log('Switched to Group Chat mode');
+            }
+            
+            window.switchToPrivateChat = async function() {
+                // Stop typing indicators di mode sebelumnya
+                stopGroupTyping();
+                
+                currentChatMode = 'private';
+                $('#group-mode-btn').removeClass('active');
+                $('#private-mode-btn').addClass('active');
+                $('#group-sidebar').addClass('hidden');
+                $('#private-sidebar').removeClass('hidden');
+                $('#group-chat-header').addClass('hidden');
+                $('#private-chat-header').removeClass('hidden');
+                $('#group-messages').addClass('hidden');
+                $('#private-messages').removeClass('hidden');
+                $('#group-message-form').addClass('hidden');
+                $('#private-message-form').removeClass('hidden');
+                if (conversations.length === 0) {
+                    loadConversations();
+                }
+                
+                // Auto-read current conversation ketika switch ke private mode
+                if (currentConversation) {
+                    await markConversationAsRead(currentConversation.id);
+                }
+                
+                // Reset scroll state and check position
+                isAtBottom = true;
+                hideScrollToBottomBtn();
+                setTimeout(() => checkScrollPosition('private'), 100);
+                
+                console.log('Switched to Private Chat mode');
+            }
+
+            // Start Private Chat from User List Click
+            window.startPrivateChatFromUserList = function(userId, username) {
+                // Switch to private chat mode first
+                switchToPrivateChat();
+                
+                // Small delay to ensure mode switch is complete
+                setTimeout(() => {
+                    startNewConversation(userId, username);
+                    showToast(`Starting private chat with ${username}`, 'success');
+                }, 200);
+            }
+
+            // ==================== APP INFO ====================
+
+            async function loadAppInfo() {
+                try {
+                    const response = await $.get('/api/app-info');
+                    const appName = response.appName || 'Jawa Chat';
+                    document.title = appName;
+                    $('#app-title').text(`💬 ${appName}`);
+                    $('#welcome-message').html(`
+                        Selamat datang di Global Chat ${appName}! 🌍<br>
+                        Chat dengan semua orang di room ini. Semua pesan tersimpan dalam database.
+                    `);
+                } catch (error) {
+                    console.warn('Gagal load app info, menggunakan nama default');
+                }
+            }
+
+            // ==================== GROUP CHAT FUNCTIONS ====================
+
+            async function loadGroupMessages() {
+                try {
+                    const response = await $.get('/api/messages');
+                    const $groupMessages = $('#group-messages');
+                    $groupMessages.empty();
+                    
+                    if (response.messages.length === 0) {
+                        $groupMessages.html(`
+                            <div class="welcome-message">
+                                Selamat datang di Global Chat! 🌍<br>
+                                Mulai percakapan dengan mengirim pesan pertama.
+                            </div>
+                        `);
+                    } else {
+                        response.messages.forEach(message => {
+                            displayGroupMessage(message, false);
+                        });
+                    }
+                    
+                    scrollToBottom('group');
+                } catch (error) {
+                    console.error('Error loading group messages:', error);
+                }
+            }
+
+            function displayGroupMessage(message, animate = true) {
+                const $groupMessages = $('#group-messages');
+                const isOwnMessage = message.sender_id === currentUser.id;
+                const timestamp = formatTime24Hour(message.created_at); // Format 24 jam untuk grup
+                const avatar = message.sender_username.charAt(0).toUpperCase();
+                
+                const messageHtml = `
+                    <div class="message ${isOwnMessage ? 'own-message' : ''}" ${animate ? 'style="opacity: 0;"' : ''}>
+                        <div class="message-wrapper">
+                            <div class="message-avatar">${avatar}</div>
+                            <div class="message-content">
+                                <div class="message-header">
+                                    <span class="message-sender">${escapeHtml(message.sender_username)}</span>
+                                    ${message.is_edited ? '<span class="edited-label">(edited)</span>' : ''}
+                                </div>
+                                <div class="message-body">
+                                    <span class="message-text">${escapeHtml(message.message)}</span>
+                                    <span class="message-time">${timestamp}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                $groupMessages.append(messageHtml);
+                
+                if (animate) {
+                    $groupMessages.find('.message').last().animate({ opacity: 1 }, 300);
+                    
+                    // Show scroll to bottom button if user is not at bottom and it's not own message
+                    if (!isAtBottom && !isOwnMessage) {
+                        showScrollToBottomBtn(1);
+                    }
+                }
+                
+                // Only auto-scroll if user is at bottom or it's their own message
+                if (isAtBottom || isOwnMessage) {
+                    scrollToBottom('group');
+                }
+            }
+
+            // ==================== PRIVATE CHAT FUNCTIONS ====================
+
+            async function loadConversations() {
+                try {
+                    const response = await $.get('/api/conversations');
+                    conversations = response.conversations || [];
+                    renderConversations();
+                } catch (error) {
+                    console.error('Error loading conversations:', error);
+                }
+            }
+
+
+
+            function renderConversations() {
+                const $conversationsList = $('#conversations-list');
+                
+                if (conversations.length === 0) {
+                    $conversationsList.html(`
+                        <div class="empty-state" style="text-align: center; padding: 20px;">
+                            <i class="fas fa-inbox" style="font-size: 32px; color: #bdc3c7; margin-bottom: 10px;"></i>
+                            <p style="color: #6c757d; font-size: 14px;">Belum ada conversations</p>
+                            <small style="color: #6c757d;">Klik user di Global Chat untuk memulai percakapan</small>
+                        </div>
+                    `);
+                    return;
+                }
+                
+                const conversationsHtml = conversations.map(conv => {
+                    const isActive = currentConversation && currentConversation.id === conv.id;
+                    const lastMessageText = conv.last_message ? 
+                        (conv.last_message.is_from_me ? 'Anda: ' : '') + conv.last_message.text : 
+                        'Belum ada pesan';
+                    
+                    return `
+                        <div class="conversation-item ${isActive ? 'active' : ''}" 
+                             onclick="selectConversation(${conv.id})">
+                            ${conv.other_user.is_online ? '<div class="online-indicator-small"></div>' : ''}
+                            ${conv.unread_count > 0 ? `<div class="unread-badge">${conv.unread_count}</div>` : ''}
+                            
+                            <div class="conversation-header">
+                                <div class="conversation-name">${escapeHtml(conv.other_user.username)}</div>
+                                <div class="conversation-time">${conv.last_message ? formatTime(conv.last_message.created_at) : ''}</div>
+                            </div>
+                            
+                            <div class="conversation-preview">${escapeHtml(lastMessageText)}</div>
+                        </div>
+                    `;
+                }).join('');
+                
+                $conversationsList.html(conversationsHtml);
+            }
+
+
+
+            window.selectConversation = async function(conversationId) {
+                const conversation = conversations.find(c => c.id === conversationId);
+                if (!conversation) return;
+                
+                // Stop typing di conversation sebelumnya
+                stopPrivateTyping();
+                
+                currentConversation = conversation;
+                
+                // Reset scroll state when switching conversation
+                isAtBottom = true;
+                hideScrollToBottomBtn();
+                
+                renderConversations();
+                updatePrivateChatHeader(conversation);
+                
+                $privateMessageInput.attr('contenteditable', 'true').attr('data-placeholder', `Pesan untuk ${conversation.other_user.username}...`);
+                $('#private-message-form button[type="submit"]').prop('disabled', false);
+                
+                await loadPrivateMessages(conversationId);
+                await markConversationAsRead(conversationId);
+                
+                // Check scroll position after loading messages
+                setTimeout(() => checkScrollPosition('private'), 100);
+            }
+
+            function updatePrivateChatHeader(conversation) {
+                const avatar = conversation.other_user.username.charAt(0).toUpperCase();
+                const statusText = conversation.other_user.is_online ? 'Online' : 'Offline';
+                const statusClass = conversation.other_user.is_online ? '' : 'offline';
+                
+                $('#private-chat-avatar').text(avatar);
+                $('#private-chat-username').text(conversation.other_user.username);
+                $('#private-chat-status').text(statusText).attr('class', `chat-user-status ${statusClass}`);
+            }
+
+            async function loadPrivateMessages(conversationId) {
+                try {
+                    const response = await $.get(`/api/conversations/${conversationId}/messages`);
+                    const messages = response.messages || [];
+                    renderPrivateMessages(messages);
+                    return messages;
+                } catch (error) {
+                    console.error('Error loading private messages:', error);
+                    return [];
+                }
+            }
+
+            function renderPrivateMessages(messages) {
+                const $privateMessages = $('#private-messages');
+                
+                if (messages.length === 0) {
+                    $privateMessages.html(`
+                        <div class="welcome-message">
+                            <i class="fas fa-comment" style="font-size: 32px; color: #bdc3c7; margin-bottom: 10px;"></i><br>
+                            Belum ada pesan. Mulai percakapan sekarang!
+                        </div>
+                    `);
+                    return;
+                }
+                
+                const groupedMessages = groupMessagesByDate(messages);
+                
+                let messagesHtml = '';
+                Object.keys(groupedMessages).forEach(date => {
+                    messagesHtml += `
+                        <div class="date-separator">
+                            <span>${date}</span>
+                        </div>
+                    `;
+                    
+                    groupedMessages[date].forEach(message => {
+                        messagesHtml += renderPrivateMessage(message);
+                    });
+                });
+                
+                $privateMessages.html(messagesHtml);
+                
+                // Only auto-scroll if user is at bottom
+                if (isAtBottom) {
+                    scrollToBottom('private');
+                }
+            }
+
+            function renderPrivateMessage(message) {
+                const isOwn = message.sender_id === currentUser.id;
+                
+                // Status icon dengan warna yang tepat
+                let statusIcon = '';
+                if (isOwn) {
+                    if (message.is_read) {
+                        // Sudah dibaca - centang biru
+                        statusIcon = `<span class="message-status">
+                            <i class="fas fa-check-double read" data-message-id="${message.id}"></i>
+                        </span>`;
+                    } else {
+                        // Terkirim tapi belum dibaca - centang abu-abu
+                        statusIcon = `<span class="message-status">
+                            <i class="fas fa-check-double sent" data-message-id="${message.id}"></i>
+                        </span>`;
+                    }
+                }
+                
+                return `
+                    <div class="message ${isOwn ? 'own' : ''}">
+                        <div class="message-bubble">
+                            <div class="message-body">
+                                <span class="message-text">${escapeHtml(message.message)}</span>
+                                <span class="message-time">${message.timestamp}</span>
+                                ${statusIcon}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            function groupMessagesByDate(messages) {
+                const groups = {};
+                messages.forEach(msg => {
+                    const date = msg.date_header;
+                    if (!groups[date]) {
+                        groups[date] = [];
+                    }
+                    groups[date].push(msg);
+                });
+                return groups;
+            }
+
+            window.startNewConversation = async function(targetUserId, targetUsername) {
+                try {
+                    const response = await fetch('/api/conversations', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ targetUserId: targetUserId })
+                    });
+                    
+                    if (response.ok) {
+                        await loadConversations();
+                        const data = await response.json();
+                        selectConversation(data.conversation.id);
+                        showNotification(`Chat dimulai dengan ${targetUsername}`, 'success');
+                    }
+                } catch (error) {
+                    console.error('Error starting new conversation:', error);
+                    showNotification('Gagal memulai chat', 'error');
+                }
+            }
+
+            // Debounced version untuk menghindari spam API calls
+            const debouncedMarkAsRead = {};
+            
+            async function markConversationAsRead(conversationId) {
+                try {
+                    // Clear previous timeout untuk conversation ini
+                    if (debouncedMarkAsRead[conversationId]) {
+                        clearTimeout(debouncedMarkAsRead[conversationId]);
+                    }
+                    
+                    // Set timeout baru
+                    debouncedMarkAsRead[conversationId] = setTimeout(async () => {
+                        try {
+                            await fetch(`/api/conversations/${conversationId}/read`, { method: 'PUT' });
+                            
+                            const conv = conversations.find(c => c.id === conversationId);
+                            if (conv) {
+                                conv.unread_count = 0;
+                                renderConversations();
+                            }
+                        } catch (error) {
+                            console.error('Error marking conversation as read:', error);
+                        } finally {
+                            delete debouncedMarkAsRead[conversationId];
+                        }
+                    }, 300); // 300ms delay untuk debounce
+                    
+                } catch (error) {
+                    console.error('Error in markConversationAsRead:', error);
+                }
+            }
+
+            // ==================== MODAL FUNCTIONS ====================
+
+            window.showNewPrivateChatModal = function() {
+                $('#new-private-chat-modal').fadeIn(300);
+                loadModalUsers();
+                $('#modal-search-users').focus();
+            }
+
+            window.hideNewPrivateChatModal = function() {
+                $('#new-private-chat-modal').fadeOut(300);
+            }
+
+            async function loadModalUsers() {
+                try {
+                    const response = await $.get('/api/users-with-status');
+                    const users = (response.users || []).filter(user => user.id !== currentUser.id);
+                    renderModalUsers(users);
+                } catch (error) {
+                    console.error('Error loading modal users:', error);
+                }
+            }
+
+            function renderModalUsers(users) {
+                const $modalUsersList = $('#modal-users-list');
+                
+                if (users.length === 0) {
+                    $modalUsersList.html('<div style="text-align: center; color: #6c757d; padding: 20px;">Tidak ada pengguna tersedia</div>');
+                    return;
+                }
+                
+                const usersHtml = users.map(user => {
+                    const avatar = user.username.charAt(0).toUpperCase();
+                    const statusText = user.is_online ? 'Online' : 'Offline';
+                    const statusClass = user.is_online ? '' : 'offline';
+                    
+                    return `
+                        <div class="modal-user-item" onclick="startNewConversationFromModal(${user.id}, '${escapeHtml(user.username)}')">
+                            <div class="modal-user-avatar">${avatar}</div>
+                            <div class="modal-user-info">
+                                <div class="modal-user-name">${escapeHtml(user.username)}</div>
+                                <div class="modal-user-status ${statusClass}">${statusText}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                $modalUsersList.html(usersHtml);
+            }
+
+            window.startNewConversationFromModal = async function(targetUserId, targetUsername) {
+                hideNewPrivateChatModal();
+                
+                if (currentChatMode !== 'private') {
+                    switchToPrivateChat();
+                }
+                
+                await startNewConversation(targetUserId, targetUsername);
+            }
+
+            // ==================== EVENT HANDLERS ====================
+
+            function setupEventHandlers() {
+                $groupMessageForm.on('submit', async function(e) {
+                    e.preventDefault();
+                    const message = $groupMessageInput.val().trim();
+                    if (message) {
+                        await sendGroupMessage(message);
+                        $groupMessageInput.val('');
+                    }
+                });
+
+                $privateMessageForm.on('submit', async function(e) {
+                    e.preventDefault();
+                    const message = $privateMessageInput.text().trim();
+                    if (message && currentConversation) {
+                        await sendPrivateMessage(message);
+                        $privateMessageInput.text('').focus();
+                    }
+                });
+
+                $groupMessageInput.on('input', handleTyping);
+                $privateMessageInput.on('input', handlePrivateTyping);
+                
+                // Handle Enter/Shift+Enter for private chat
+                $privateMessageInput.on('keydown', function(e) {
+                    if (e.which === 13) { // Enter key
+                        if (e.shiftKey) {
+                            // Shift+Enter: Allow new line (default behavior)
+                            return true;
+                        } else {
+                            // Enter only: Send message
+                            e.preventDefault();
+                            $privateMessageForm.trigger('submit');
+                            return false;
+                        }
+                    }
+                });
+
+                $('#search-conversations').on('input', function() {
+                    const query = $(this).val().toLowerCase();
+                    filterConversations(query);
+                });
+
+                $('#modal-search-users').on('input', function() {
+                    const query = $(this).val().toLowerCase();
+                    filterModalUsers(query);
+                });
+
+                $('#new-private-chat-modal').on('click', function(e) {
+                    if (e.target === this) {
+                        hideNewPrivateChatModal();
+                    }
+                });
+
+                $('#logout-btn').on('click', logout);
+
+                // Auto-resize contenteditable input
+                $privateMessageInput.on('input', function() {
+                    // Auto scroll to bottom when typing
+                    this.scrollTop = this.scrollHeight;
+                });
+
+                // Scroll to bottom button click handler
+                $scrollToBottomBtn.on('click', function() {
+                    scrollToBottomSmooth();
+                    hideScrollToBottomBtn();
+                });
+
+                // Setup scroll detection for both chat modes
+                $('#group-messages').on('scroll', function() {
+                    checkScrollPosition('group');
+                });
+            }
+
+            async function sendGroupMessage(message) {
+                try {
+                    // Langsung stop typing indicator sebelum kirim pesan
+                    stopGroupTyping();
+                    
+                    socket.emit('chat-message', { message: message });
+                } catch (error) {
+                    console.error('Error sending group message:', error);
+                    showNotification('Gagal mengirim pesan', 'error');
+                }
+            }
+
+            async function sendPrivateMessage(message) {
+                try {
+                    // Langsung stop typing indicator sebelum kirim pesan
+                    stopPrivateTyping();
+                    
+                    const response = await fetch(`/api/conversations/${currentConversation.id}/messages`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            message: message,
+                            receiverId: currentConversation.other_user.id
+                        })
+                    });
+
+                    if (response.ok) {
+                        await loadPrivateMessages(currentConversation.id);
+                        await loadConversations();
+                    } else {
+                        throw new Error('Gagal mengirim pesan');
+                    }
+                } catch (error) {
+                    console.error('Error sending private message:', error);
+                    showNotification('Gagal mengirim pesan', 'error');
+                }
+            }
+
+            function filterConversations(query) {
+                $('.conversation-item').each(function() {
+                    const username = $(this).find('.conversation-name').text().toLowerCase();
+                    const messageText = $(this).find('.conversation-preview').text().toLowerCase();
+                    const matches = username.includes(query) || messageText.includes(query);
+                    $(this).toggle(matches);
+                });
+            }
+
+            function filterModalUsers(query) {
+                $('.modal-user-item').each(function() {
+                    const username = $(this).find('.modal-user-name').text().toLowerCase();
+                    const matches = username.includes(query);
+                    $(this).toggle(matches);
+                });
+            }
+
+            // ==================== UTILITY FUNCTIONS ====================
+
+            async function loadOnlineUsers() {
+                try {
+                    const response = await $.get('/api/users-with-status');
+                    updateOnlineUsers(response.users);
+                } catch (error) {
+                    console.error('Error loading users with status:', error);
+                    try {
+                        const fallbackResponse = await $.get('/api/online-users');
+                        updateOnlineUsers(fallbackResponse.users);
+                    } catch (fallbackError) {
+                        console.error('Error loading fallback online users:', fallbackError);
+                    }
+                }
+            }
+
+            function updateOnlineUsers(users) {
+                $onlineUsers.empty();
+                $onlineCount.text(users.filter(user => user.is_online).length);
+                
+                // Urutkan users: online dulu, kemudian offline berdasarkan last_seen
+                const sortedUsers = users.sort((a, b) => {
+                    // Jika status online berbeda, prioritaskan yang online
+                    if (a.is_online !== b.is_online) {
+                        return b.is_online - a.is_online; // online (1) dulu, offline (0) kemudian
+                    }
+                    
+                    // Jika sama-sama online, urutkan berdasarkan username
+                    if (a.is_online && b.is_online) {
+                        return a.username.localeCompare(b.username);
+                    }
+                    
+                    // Jika sama-sama offline, urutkan berdasarkan last_seen (terbaru dulu)
+                    if (!a.is_online && !b.is_online) {
+                        const aTime = new Date(a.last_seen || 0).getTime();
+                        const bTime = new Date(b.last_seen || 0).getTime();
+                        return bTime - aTime; // terbaru dulu
+                    }
+                    
+                    return 0;
+                });
+                
+                sortedUsers.forEach(user => {
+                    const isCurrentUser = user.id === currentUser.id;
+                    const avatar = user.username.charAt(0).toUpperCase();
+                    const status = user.status || { text: 'Online', type: 'online' };
+                    
+                    let indicatorClass = 'online-indicator';
+                    if (status.type === 'recent_offline') {
+                        indicatorClass = 'recent-offline-indicator';
+                    } else if (status.type === 'offline') {
+                        indicatorClass = 'offline-indicator';
+                    }
+                    
+                    const userHtml = `
+                        <li class="user-item ${isCurrentUser ? 'current-user' : ''}" ${!isCurrentUser ? `onclick="startPrivateChatFromUserList(${user.id}, '${escapeHtml(user.username)}')"` : ''} 
+                            data-user-id="${user.id}" 
+                            data-status-type="${status.type}"
+                            data-last-seen="${user.last_seen || ''}">
+                            <div class="user-avatar">${avatar}</div>
+                            <div class="user-info">
+                                <span class="username">${escapeHtml(user.username)}</span>
+                                ${isCurrentUser ? '<span class="user-badge">(Anda)</span>' : ''}
+                                <div class="user-status">
+                                    <span class="${indicatorClass}"></span>
+                                    <span class="status-text">${escapeHtml(status.text)}</span>
+                                </div>
+                            </div>
+                        </li>
+                    `;
+                    $onlineUsers.append(userHtml);
+                });
+            }
+
+            function setupSocketEvents() {
+                socket.on('connect', () => {
+                    updateConnectionStatus('connected');
+                });
+
+                socket.on('disconnect', () => {
+                    updateConnectionStatus('disconnected');
+                });
+
+                socket.on('join-success', (data) => {
+                    console.log('Join success:', data.message);
+                    showNotification(data.message, 'success');
+                });
+
+                socket.on('chat-message', (message) => {
+                    if (currentChatMode === 'group') {
+                        displayGroupMessage(message, true);
+                    }
+                });
+
+                socket.on('user-connected', (data) => {
+                    loadOnlineUsers();
+                });
+
+                socket.on('user-disconnected', (data) => {
+                    loadOnlineUsers();
+                });
+
+                socket.on('online-users-update', (data) => {
+                    updateOnlineUsers(data.users);
+                    if (currentChatMode === 'private') {
+                        allUsers = data.users.filter(user => user.id !== currentUser.id);
+                    }
+                });
+
+                socket.on('user-typing', (data) => {
+                    if (currentChatMode === 'group') {
+                        showTypingIndicator(data.username);
+                    }
+                });
+
+                socket.on('user-stop-typing', () => {
+                    if (currentChatMode === 'group') {
+                        hideTypingIndicator();
+                    }
+                });
+
+                socket.on('private-message', async (data) => {
+                    if (currentChatMode === 'private') {
+                        loadConversations();
+                        if (currentConversation && currentConversation.id === data.conversation_id) {
+                            // Check if user is at bottom before loading new messages
+                            const wasAtBottom = isAtBottom;
+                            await loadPrivateMessages(currentConversation.id);
+                            
+                            // Auto-mark as read karena user sedang aktif di conversation ini
+                            await markConversationAsRead(currentConversation.id);
+                            
+                            // Show scroll button if user was not at bottom when message arrived
+                            if (!wasAtBottom) {
+                                showScrollToBottomBtn(1);
+                            }
+                        } else {
+                            // Load conversations untuk update badge jika conversation lain
+                            loadConversations();
+                        }
+                    } else {
+                        // User sedang di global chat - update badge
+                        loadConversations();
+                    }
+                    showNotification(`Pesan baru dari ${data.sender_username}`, 'info');
+                });
+
+                socket.on('private-message-sent', (data) => {
+                    if (currentChatMode === 'private' && currentConversation && currentConversation.id === data.conversation_id) {
+                        loadPrivateMessages(currentConversation.id);
+                    }
+                });
+
+                socket.on('private-typing', (data) => {
+                    if (currentChatMode === 'private' && currentConversation && currentConversation.id === data.conversationId) {
+                        showPrivateTypingIndicator(data.username);
+                    }
+                });
+
+                socket.on('private-stop-typing', (data) => {
+                    if (currentChatMode === 'private' && currentConversation && currentConversation.id === data.conversationId) {
+                        hidePrivateTypingIndicator();
+                    }
+                });
+
+                // Real-time status update ketika pesan dibaca
+                socket.on('messages-read', (data) => {
+                    if (currentChatMode === 'private' && currentConversation && 
+                        data.conversationId === currentConversation.id) {
+                        // Update semua status icon pesan milik kita menjadi read (biru)
+                        $('#private-messages .message.own .message-status i.sent').each(function() {
+                            $(this).removeClass('sent').addClass('read');
+                        });
+                    }
+                });
+
+                socket.on('error', (error) => {
+                    console.error('Socket error:', error);
+                    showNotification(error.message, 'error');
+                });
+            }
+
+            function handleTyping() {
+                if (currentChatMode === 'group') {
+                    if (!isTyping) {
+                        socket.emit('typing');
+                        isTyping = true;
+                    }
+                    
+                    clearTimeout(typingTimer);
+                    typingTimer = setTimeout(() => {
+                        stopGroupTyping();
+                    }, 2000);
+                }
+            }
+
+            // Helper function untuk stop group typing
+            function stopGroupTyping() {
+                if (isTyping) {
+                    socket.emit('stop-typing');
+                    isTyping = false;
+                    clearTimeout(typingTimer);
+                }
+            }
+
+            function handlePrivateTyping() {
+                if (currentChatMode === 'private' && currentConversation && $privateMessageInput.attr('contenteditable') === 'true') {
+                    const message = $privateMessageInput.text().trim();
+                    
+                    // Auto-read ketika user mulai mengetik
+                    markConversationAsRead(currentConversation.id);
+                    
+                    if (message.length > 0) {
+                        if (!isPrivateTyping) {
+                            socket.emit('private-typing', {
+                                conversationId: currentConversation.id,
+                                receiverId: currentConversation.other_user.id
+                            });
+                            isPrivateTyping = true;
+                        }
+                        
+                        clearTimeout(privateTypingTimer);
+                        privateTypingTimer = setTimeout(() => {
+                            stopPrivateTyping();
+                        }, 2000);
+                    } else if (isPrivateTyping) {
+                        // Stop typing immediately when input is empty
+                        stopPrivateTyping();
+                    }
+                }
+            }
+
+            // Helper function untuk stop private typing
+            function stopPrivateTyping() {
+                if (isPrivateTyping && currentConversation) {
+                    socket.emit('private-stop-typing', {
+                        conversationId: currentConversation.id,
+                        receiverId: currentConversation.other_user.id
+                    });
+                    isPrivateTyping = false;
+                    clearTimeout(privateTypingTimer);
+                }
+            }
+
+            function showTypingIndicator(username) {
+                $('#typing-user').text(username);
+                $typingIndicator.show();
+            }
+
+            function hideTypingIndicator() {
+                $typingIndicator.hide();
+            }
+
+            function showPrivateTypingIndicator(username) {
+                const avatar = username.charAt(0).toUpperCase();
+                $('#private-typing-avatar').text(avatar);
+                $privateTypingIndicator.addClass('show');
+                scrollToBottom('private');
+            }
+
+            function hidePrivateTypingIndicator() {
+                $privateTypingIndicator.removeClass('show');
+            }
+
+            function updateConnectionStatus(status) {
+                $connectionStatus.removeClass('connected disconnected').addClass(status);
+                $connectionStatus.text(status === 'connected' ? 'Online' : 'Offline');
+            }
+
+            function scrollToBottom(mode = null) {
+                const targetMode = mode || currentChatMode;
+                const container = targetMode === 'group' ? $('#group-messages') : $('#private-messages');
+                container.scrollTop(container[0].scrollHeight);
+                isAtBottom = true;
+                hideScrollToBottomBtn();
+            }
+
+            function scrollToBottomSmooth(mode = null) {
+                const targetMode = mode || currentChatMode;
+                const container = targetMode === 'group' ? $('#group-messages') : $('#private-messages');
+                container.animate({ scrollTop: container[0].scrollHeight }, 300);
+                isAtBottom = true;
+                newMessageCount = 0;
+            }
+
+            function checkScrollPosition(mode) {
+                if (mode !== currentChatMode) return;
+
+                const container = mode === 'group' ? $('#group-messages') : $('#private-messages');
+                const scrollTop = container.scrollTop();
+                const scrollHeight = container[0].scrollHeight;
+                const clientHeight = container.height();
+                
+                // Check if user is near bottom (within 100px threshold)
+                const threshold = 100;
+                const nearBottom = scrollTop + clientHeight >= scrollHeight - threshold;
+                
+                isAtBottom = nearBottom;
+                
+                if (isAtBottom) {
+                    hideScrollToBottomBtn();
+                    newMessageCount = 0;
+                }
+            }
+
+            function showScrollToBottomBtn(messageCount = 1) {
+                if (isAtBottom) return;
+                
+                newMessageCount += messageCount;
+                $newMessageCount.text(newMessageCount);
+                
+                if (newMessageCount > 0) {
+                    $('#new-message-indicator').addClass('show');
+                } else {
+                    $('#new-message-indicator').removeClass('show');
+                }
+                
+                $scrollToBottomBtn.addClass('show');
+            }
+
+            function hideScrollToBottomBtn() {
+                $scrollToBottomBtn.removeClass('show');
+                $('#new-message-indicator').removeClass('show');
+                newMessageCount = 0;
+            }
+
+            function startStatusUpdateInterval() {
+                statusUpdateInterval = setInterval(loadOnlineUsers, 30000);
+            }
+
+            async function logout() {
+                try {
+                    await $.post('/api/logout');
+                    window.location.href = '/login';
+                } catch (error) {
+                    console.error('Logout error:', error);
+                    window.location.href = '/login';
+                }
+            }
+
+            function formatTime(timestamp) {
+                const date = new Date(timestamp);
+                return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            }
+
+            // Format waktu 24 jam khusus untuk grup chat
+            function formatTime24Hour(timestamp) {
+                const date = new Date(timestamp);
+                return date.toLocaleTimeString('id-ID', { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    hour12: false 
+                });
+            }
+
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            function showNotification(message, type = 'info') {
+                const notification = $(`
+                    <div class="notification ${type}" style="margin-bottom: 10px; padding: 12px; border-radius: 8px; background: ${type === 'success' ? '#d4edda' : type === 'error' ? '#f8d7da' : '#d1ecf1'}; border: 1px solid ${type === 'success' ? '#c3e6cb' : type === 'error' ? '#f5c6cb' : '#bee5eb'}; color: ${type === 'success' ? '#155724' : type === 'error' ? '#721c24' : '#0c5460'};">
+                        <div class="notification-content">
+                            <span class="notification-message">${escapeHtml(message)}</span>
+                            <button class="notification-close" onclick="$(this).parent().parent().fadeOut(300, function() { $(this).remove(); })" style="float: right; background: none; border: none; color: inherit; cursor: pointer;">&times;</button>
+                        </div>
+                    </div>
+                `);
+                
+                $('#notification-container').append(notification);
+                
+                setTimeout(() => {
+                    notification.fadeOut(300, function() {
+                        $(this).remove();
+                    });
+                }, 5000);
+            }
+
+            // Auto-read ketika window focus dan user sedang di private chat
+            $(window).on('focus', async () => {
+                if (currentChatMode === 'private' && currentConversation) {
+                    // Auto-mark as read ketika user kembali fokus ke halaman
+                    await markConversationAsRead(currentConversation.id);
+                }
+            });
+
+            // Auto-read ketika user scroll atau mengklik di area messages
+            $(document).on('click', '#private-messages', async () => {
+                if (currentChatMode === 'private' && currentConversation) {
+                    await markConversationAsRead(currentConversation.id);
+                }
+            });
+
+            // Auto-read ketika user scroll di private messages
+            $('#private-messages').on('scroll', async function() {
+                if (currentChatMode === 'private' && currentConversation) {
+                    // Delay sedikit untuk avoid spam API calls
+                    clearTimeout(window.autoReadTimeout);
+                    window.autoReadTimeout = setTimeout(async () => {
+                        await markConversationAsRead(currentConversation.id);
+                    }, 500);
+                }
+                checkScrollPosition('private');
+            });
+
+            // Cleanup on page unload
+            $(window).on('beforeunload', () => {
+                if (statusUpdateInterval) {
+                    clearInterval(statusUpdateInterval);
+                }
+                if (window.autoReadTimeout) {
+                    clearTimeout(window.autoReadTimeout);
+                }
+                socket.disconnect();
+            });
+        });
+    </script>
+</body>
+</html> 
+

@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Jawa Chat</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .auth-container {
+            width: 90%;
+            max-width: 400px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .auth-header {
+            background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        .auth-header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .auth-header p {
+            opacity: 0.9;
+            font-size: 0.9em;
+        }
+
+        .auth-form {
+            padding: 30px;
+        }
+
+        .form-tabs {
+            display: flex;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 15px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            color: #6c757d;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .tab-button.active {
+            color: #25d366;
+            font-weight: bold;
+        }
+
+        .tab-button.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #25d366;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #495057;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #25d366;
+            box-shadow: 0 0 0 3px rgba(37, 211, 102, 0.1);
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(37, 211, 102, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            transform: none;
+            cursor: not-allowed;
+        }
+
+        .alert {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .demo-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+
+        .demo-info h4 {
+            margin-bottom: 10px;
+            color: #0c5460;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: #6c757d;
+            margin: 10px 0;
+        }
+
+        .loading::after {
+            content: '';
+            animation: dots 1.5s infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+
+        @media (max-width: 768px) {
+            .auth-container {
+                width: 95%;
+                margin: 20px;
+            }
+            
+            .auth-header {
+                padding: 20px 15px;
+            }
+            
+            .auth-form {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-header">
+            <h1 id="app-title">💬 Jawa Chat</h1>
+            <p>Chat real-time</p>
+        </div>
+        
+        <div class="auth-form">
+            <div class="form-tabs">
+                <button class="tab-button active" data-tab="login">Login</button>
+                <button class="tab-button" data-tab="register">Register</button>
+            </div>
+
+            <div id="alert-container"></div>
+            <div class="loading" id="loading">Memproses</div>
+
+            <!-- Login Form -->
+            <form id="login-form" class="auth-form-content">
+                <div class="form-group">
+                    <label for="login-username">Username</label>
+                    <input type="text" id="login-username" class="form-control" 
+                           placeholder="Masukkan username" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" class="form-control" 
+                           placeholder="Masukkan password" required>
+                </div>
+                
+                <button type="submit" class="btn-primary">Login</button>
+            </form>
+
+            <!-- Register Form -->
+            <form id="register-form" class="auth-form-content" style="display: none;">
+                <div class="form-group">
+                    <label for="register-username">Username</label>
+                    <input type="text" id="register-username" class="form-control" 
+                           placeholder="Pilih username (min 3 karakter)" required minlength="3" maxlength="50">
+                </div>
+                
+                <div class="form-group">
+                    <label for="register-password">Password</label>
+                    <input type="password" id="register-password" class="form-control" 
+                           placeholder="Buat password (min 6 karakter)" required minlength="6">
+                </div>
+                
+                <div class="form-group">
+                    <label for="register-confirm">Konfirmasi Password</label>
+                    <input type="password" id="register-confirm" class="form-control" 
+                           placeholder="Ulangi password" required>
+                </div>
+                
+                <button type="submit" class="btn-primary">Register</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/jquery-3.7.1.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Load app info untuk mendapatkan nama aplikasi
+            loadAppInfo();
+            
+            // Tab switching
+            $('.tab-button').on('click', function() {
+                const tab = $(this).data('tab');
+                
+                $('.tab-button').removeClass('active');
+                $(this).addClass('active');
+                
+                $('.auth-form-content').hide();
+                $(`#${tab}-form`).show();
+                
+                clearAlerts();
+            });
+
+            // Login form
+            $('#login-form').on('submit', function(e) {
+                e.preventDefault();
+                
+                const username = $('#login-username').val().trim();
+                const password = $('#login-password').val();
+                
+                if (!username || !password) {
+                    showAlert('Username dan password harus diisi', 'error');
+                    return;
+                }
+
+                login(username, password);
+            });
+
+            // Register form
+            $('#register-form').on('submit', function(e) {
+                e.preventDefault();
+                
+                const username = $('#register-username').val().trim();
+                const password = $('#register-password').val();
+                const confirm = $('#register-confirm').val();
+                
+                if (!username || !password || !confirm) {
+                    showAlert('Semua field harus diisi', 'error');
+                    return;
+                }
+
+                if (username.length < 3) {
+                    showAlert('Username minimal 3 karakter', 'error');
+                    return;
+                }
+
+                if (password.length < 6) {
+                    showAlert('Password minimal 6 karakter', 'error');
+                    return;
+                }
+
+                if (password !== confirm) {
+                    showAlert('Konfirmasi password tidak cocok', 'error');
+                    return;
+                }
+
+                register(username, password);
+            });
+
+            // Functions
+            function loadAppInfo() {
+                $.get('/api/app-info')
+                    .done(function(response) {
+                        const appName = response.appName || 'Jawa Chat';
+                        
+                        // Update title dan header
+                        document.title = `Login - ${appName}`;
+                        $('#app-title').text(`💬 ${appName}`);
+                    })
+                    .fail(function() {
+                        // Jika gagal load, tetap pakai default
+                        console.warn('Gagal load app info, menggunakan nama default');
+                    });
+            }
+            
+            function login(username, password) {
+                showLoading(true);
+                
+                $.post('/api/login', { username, password })
+                    .done(function(response) {
+                        showAlert(response.message, 'success');
+                        setTimeout(() => {
+                            window.location.href = '/chat';
+                        }, 1500);
+                    })
+                    .fail(function(xhr) {
+                        const error = xhr.responseJSON?.error || 'Login gagal';
+                        showAlert(error, 'error');
+                    })
+                    .always(function() {
+                        showLoading(false);
+                    });
+            }
+
+            function register(username, password) {
+                showLoading(true);
+                
+                $.post('/api/register', { username, password })
+                    .done(function(response) {
+                        showAlert(response.message, 'success');
+                        
+                        // Auto switch to login form
+                        setTimeout(() => {
+                            $('.tab-button[data-tab="login"]').click();
+                            $('#login-username').val(username);
+                            $('#login-password').focus();
+                        }, 2000);
+                    })
+                    .fail(function(xhr) {
+                        const error = xhr.responseJSON?.error || 'Registrasi gagal';
+                        showAlert(error, 'error');
+                    })
+                    .always(function() {
+                        showLoading(false);
+                    });
+            }
+
+            function showAlert(message, type) {
+                const alertHtml = `
+                    <div class="alert alert-${type}">
+                        ${message}
+                    </div>
+                `;
+                $('#alert-container').html(alertHtml);
+                
+                // Auto hide after 5 seconds
+                setTimeout(clearAlerts, 5000);
+            }
+
+            function clearAlerts() {
+                $('#alert-container').empty();
+            }
+
+            function showLoading(show) {
+                if (show) {
+                    $('#loading').show();
+                    $('.btn-primary').prop('disabled', true);
+                } else {
+                    $('#loading').hide();
+                    $('.btn-primary').prop('disabled', false);
+                }
+            }
+        });
+    </script>
+</body>
+</html> 
